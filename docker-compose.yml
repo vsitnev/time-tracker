@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+
+  db:
+    image: postgis/postgis:latest
+    user: "postgres:postgres"
+    environment:
+      - POSTGRES_DB=tracker
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5437:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    container_name: app
+    build: .
+    volumes:
+      - ./logs:/logs
+      - ./secrets:/secrets
+    env_file:
+      - .env
+    ports:
+      - "${HTTP_PORT}:${HTTP_PORT}"
+    depends_on:
+      - db
+    restart: on-failure
+
+volumes:
+  pg-data:
+    driver: local
